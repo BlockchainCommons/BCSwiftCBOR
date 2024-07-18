@@ -14,6 +14,12 @@ final class CodingTests: XCTestCase {
         let decodedT = try! T(cbor: cbor)
         XCTAssertEqual(t, decodedT)
     }
+    
+    func runTestDecode(_ data: Data, _ expectedDebugDescription: String, _ expectedDescription: String) {
+        let decodedCBOR = try! CBOR(data)
+        XCTAssertEqual(decodedCBOR.debugDescription, expectedDebugDescription)
+        XCTAssertEqual(decodedCBOR.description, expectedDescription)
+    }
 
     func testUnsigned() throws {
         runTest(UInt8 (0), "unsigned(0)", "0", "00")
@@ -145,6 +151,22 @@ final class CodingTests: XCTestCase {
         XCTAssertNil(map["foo"] as Int?)
     }
     
+    func testMapWithMapKeys() throws {
+        var k1 = Map()
+        k1.insert(1, 2)
+        
+        var k2 = Map()
+        k2.insert(3, 4)
+        
+        var m = Map()
+        m.insert(k1, 5)
+        m.insert(k2, 6)
+        runTest(m,
+            #"map({0xa10102: (map({0x01: (unsigned(1), unsigned(2))}), unsigned(5)), 0xa10304: (map({0x03: (unsigned(3), unsigned(4))}), unsigned(6))})"#,
+            #"{{1: 2}: 5, {3: 4}: 6}"#,
+            "a2a1010205a1030406")
+    }
+
     func testAndersMap() throws {
         let map: Map = [
             1: 45.7,
@@ -256,11 +278,34 @@ final class CodingTests: XCTestCase {
         // Most negative double that converts to int64.
         runTest(-9223372036854774784.0, "negative(-9223372036854774784)", "-9223372036854774784", "3b7ffffffffffffbff")
 
+        // Int64 with too much precision to be a float.
+        runTest(-9223372036854775807, "negative(-9223372036854775807)", "-9223372036854775807", "3b7ffffffffffffffe")
+        
+        // Most negative encoded as 65-bit neg
+        // Can only be decoded as bignum
+        runTestDecode(‡"3b8000000000000000", "negative(-9223372036854775809)", "-9223372036854775809")
+
         // Largest double that can convert to uint64, almost UINT64_MAX.
         runTest(18446744073709550000.0, "unsigned(18446744073709549568)", "18446744073709549568", "1bfffffffffffff800")
 
         // Just too large to convert to uint64, but converts to a single, just over UINT64_MAX.
         runTest(18446744073709552000.0, "simple(1.8446744073709552e+19)", "1.8446744073709552e+19", "fa5f800000")
+
+        // Least negative float not representable as Int64
+        runTest(-9223372036854777856.0, "negative(-9223372036854777856)", "-9223372036854777856", "3b80000000000007ff")
+
+        // Next to most negative float encodable as 65-bit neg
+        runTest(-18446744073709549568.0, "negative(-18446744073709549568)", "-18446744073709549568", "3bfffffffffffff7ff")
+
+        // 65-bit neg encoded
+        // not representable as double
+        runTestDecode(‡"3bfffffffffffffffe", "negative(-18446744073709551615)", "-18446744073709551615")
+
+        // Most negative encodable as a 65-bit neg
+        runTest(-18446744073709551616.0, "negative(-18446744073709551616)", "-18446744073709551616", "3bffffffffffffffff")
+
+        // Least negative whole integer that must be encoded as float in DCBOR (there are lots of non-whole-integer floats in the range of this table that must be DCBOR encoded as floats).
+        runTest(-18446744073709555712.0, "simple(-1.8446744073709556e+19)", "-1.8446744073709556e+19", "fbc3f0000000000001")
 
         // Large negative that converts to negative int.
         runTest(-18446742974197924000.0, "negative(-18446742974197923840)", "-18446742974197923840", "3bfffffeffffffffff")

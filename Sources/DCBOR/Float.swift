@@ -167,7 +167,10 @@ extension CBORFloat16: CBORCodable {
             self = f
         case .negative(let n):
             let b = -1 - BigInt(n)
-            guard let f = CBORFloat16(exactly: b) else {
+            guard
+                let n = Int64(exactly: b),
+                let f = CBORFloat16(exactly: n)
+            else {
                 throw CBORError.outOfRange
             }
             self = f
