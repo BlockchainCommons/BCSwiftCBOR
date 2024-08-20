@@ -200,6 +200,34 @@ final class CodingTests: XCTestCase {
         runTest("Hello", #"text("Hello")"#, #""Hello""#, "6548656c6c6f")
     }
     
+    func testNormalizedString() {
+        let composedEAcute = "\u{00E9}" // é in NFC
+        let decomposedEAcute = "\u{0065}\u{0301}" // e followed by ́ (combining acute accent) in NFD
+        
+        /// In Swift, string comparison is aware of compositional differences.
+        XCTAssertEqual(composedEAcute, decomposedEAcute)
+        
+        /// Nonetheless, they serialize differently, which is not what we
+        /// want for determinism.
+        let utf81 = composedEAcute.data(using: .utf8)!
+        let utf82 = decomposedEAcute.data(using: .utf8)!
+        XCTAssertNotEqual(utf81, utf82)
+        
+        /// But serializing them as dCBOR yields the same data.
+        let cbor1 = composedEAcute.cborData
+        let cbor2 = decomposedEAcute.cborData
+        XCTAssertEqual(cbor1, cbor2)
+        
+        /// dCBOR will reject the non-normalized form for deserialization.
+        let decomposedStringCBORData = ‡"6365cc81"
+        XCTAssertThrowsError(try CBOR(cborData: decomposedStringCBORData)) {
+            guard case CBORError.nonCanonicalString = $0 else {
+                XCTFail()
+                return
+            }
+        }
+    }
+    
     func testTagged() {
         runTest(Tagged(1, "Hello"), #"tagged(1, text("Hello"))"#, #"1("Hello")"#, "c16548656c6c6f")
     }

@@ -125,7 +125,7 @@ func parseHeaderVarint(_ data: ArraySlice<UInt8>) throws -> (majorType: MajorTyp
 }
 
 func parseBytes(_ data: ArraySlice<UInt8>, len: Int) throws -> ArraySlice<UInt8> {
-    guard !data.isEmpty else {
+    guard data.count >= len else {
         throw CBORError.underrun
     }
     return data.range(0..<len)
@@ -152,7 +152,14 @@ func decodeCBORInternal(_ data: ArraySlice<UInt8>) throws -> (cbor: CBOR, len: I
         guard let string = String(bytes: buf, encoding: .utf8) else {
             throw CBORError.invalidString
         }
-        return (string.cbor, headerVarIntLen + dataLen)
+        let normalizedString = string.precomposedStringWithCanonicalMapping
+        guard let normalizedBuf = normalizedString.data(using: .utf8) else {
+            throw CBORError.invalidString
+        }
+        guard ArraySlice(normalizedBuf) == buf else {
+            throw CBORError.nonCanonicalString
+        }
+        return (normalizedString.cbor, headerVarIntLen + dataLen)
     case .array:
         var pos = headerVarIntLen
         var items: [CBOR] = []

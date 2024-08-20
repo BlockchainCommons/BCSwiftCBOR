@@ -6,7 +6,8 @@ extension String: CBORCodable {
     }
     
     public var cborData: Data {
-        let data = self.utf8Data
+        let nfcNormalizedString = self.precomposedStringWithCanonicalMapping
+        let data = Data(nfcNormalizedString.utf8)
         return data.count.encodeVarInt(.text) + data
     }
     

@@ -18,6 +18,9 @@ public enum CBORError: LocalizedError, Equatable {
 
     /// An invalidly-encoded UTF-8 string was encountered.
     case invalidString
+    
+    /// A string was not in Unicode Normalization Form C.
+    case nonCanonicalString
 
     /// The decoded CBOR had extra data at the end.
     ///
