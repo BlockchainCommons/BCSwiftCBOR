@@ -1,44 +1,70 @@
 import Foundation
 import SortedCollections
 
-/// A CBOR map.
+/// A CBOR map with Copy-on-Write semantics.
 ///
 /// Keys are kept sorted by encoded CBOR form in ascending lexicographic order.
-public struct Map: Equatable {
-    var dict: SortedDictionary<MapKey, MapValue>
+public struct Map: Sendable {
+    private final class Storage: Sendable {
+        let dict: SortedDictionary<MapKey, MapValue>
+        
+        init() {
+            self.dict = .init()
+        }
+        
+        init(_ dict: SortedDictionary<MapKey, MapValue>) {
+            self.dict = dict
+        }
+    }
+    
+    private var storage: Storage
     
     /// Creates a new empty CBOR map.
     public init() {
-        self.dict = .init()
+        self.storage = Storage()
     }
     
     /// Creates a new CBOR map from the provided sequence of key-value pairs.
     public init<S>(_ elements: S) where S: Sequence, S.Element == (any CBOREncodable, any CBOREncodable) {
-        self.init()
+        var dict = SortedDictionary<MapKey, MapValue>()
         for (k, v) in elements {
-            self.insert(k, v)
+            dict[MapKey(k)] = MapValue(key: k.cbor, value: v.cbor)
         }
+        self.storage = Storage(dict)
+    }
+    
+    private mutating func uniqueStorage() -> SortedDictionary<MapKey, MapValue> {
+        if !isKnownUniquelyReferenced(&storage) {
+            storage = Storage(storage.dict)
+        }
+        return storage.dict
     }
     
     /// Inserts a key-value pair into the map.
     public mutating func insert<K, V>(_ key: K, _ value: V) where K: CBOREncodable, V: CBOREncodable {
+        var dict = uniqueStorage()
         dict[MapKey(key)] = MapValue(key: key.cbor, value: value.cbor)
+        storage = Storage(dict)
     }
     
     /// Removes the specified key from the map, returning the removed value if any.
     public mutating func remove<K>(_ key: K) -> CBOR? where K: CBOREncodable {
-        dict.removeValue(forKey: MapKey(key))?.value
+        var dict = uniqueStorage()
+        let value = dict.removeValue(forKey: MapKey(key))
+        storage = Storage(dict)
+        return value?.value
     }
     
     /// Returns the number of entries in the map.
-    public var count: Int { dict.count }
+    public var count: Int { storage.dict.count }
     
     /// Returns an array of all the key-value pairs in the map.
     public var entries: [(key: CBOR, value: CBOR)] {
-        dict.map { ($1.key, $1.value) }
+        storage.dict.map { ($1.key, $1.value) }
     }
     
     mutating func insertNext<K, V>(_ key: K, _ value: V) throws where K: CBOREncodable, V: CBOREncodable {
+        var dict = uniqueStorage()
         guard let lastEntry = dict.last else {
             self.insert(key, value)
             return
@@ -51,15 +77,16 @@ public struct Map: Equatable {
         guard entryKey < newKey else {
             throw CBORError.misorderedMapKey
         }
-        self.dict[newKey] = MapValue(key: key.cbor, value: value.cbor)
+        dict[newKey] = MapValue(key: key.cbor, value: value.cbor)
+        storage = Storage(dict)
     }
 
-    struct MapValue: Equatable {
+    struct MapValue: Equatable, Sendable {
         let key: CBOR
         let value: CBOR
     }
 
-    struct MapKey: Comparable {
+    struct MapKey: Comparable, Sendable {
         let keyData: Data
         
         init(_ keyData: Data) {
@@ -76,13 +103,13 @@ public struct Map: Equatable {
     }
     
     public func get<K>(_ key: K) -> CBOR? where K: CBOREncodable {
-        dict[MapKey(key)]?.value
+        storage.dict[MapKey(key)]?.value
     }
     
     /// Gets or sets the value for the given key.
     public subscript<K, V>(key: K) -> V? where K: CBOREncodable, V: CBORCodable {
         get {
-            try? V(cbor: dict[MapKey(key)]?.value)
+            try? V(cbor: storage.dict[MapKey(key)]?.value)
         }
         
         set {
@@ -103,7 +130,7 @@ extension Map: ExpressibleByDictionaryLiteral {
 
 extension Map: Sequence {
     public func makeIterator() -> Iterator {
-        return Iterator(dict)
+        return Iterator(storage.dict)
     }
 
     public struct Iterator: IteratorProtocol {
@@ -135,7 +162,7 @@ extension Map: CBORCodable {
     }
     
     public var cborData: Data {
-        let pairs = self.dict.map { (key: MapKey, value: MapValue) in
+        let pairs = self.storage.dict.map { (key: MapKey, value: MapValue) in
             (key, value.value.cborData)
         }
         var buf = pairs.count.encodeVarInt(.map)
@@ -158,7 +185,7 @@ extension Map: CBORCodable {
 
 extension Map: CustomDebugStringConvertible {
     public var debugDescription: String {
-        dict.map { (k, v) in
+        storage.dict.map { (k, v) in
             "\(k.debugDescription): (\(v.key.debugDescription), \(v.value.debugDescription))"
         }.joined(separator: ", ")
             .flanked("{", "}")
@@ -167,9 +194,15 @@ extension Map: CustomDebugStringConvertible {
 
 extension Map: CustomStringConvertible {
     public var description: String {
-        dict.map { (k, v) in
+        storage.dict.map { (k, v) in
             "\(v.key): \(v.value)"
         }.joined(separator: ", ")
             .flanked("{", "}")
+    }
+}
+
+extension Map: Equatable {
+    public static func == (lhs: Map, rhs: Map) -> Bool {
+        lhs.storage.dict == rhs.storage.dict
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A CBOR simple value.
-public enum Simple: Equatable {
+public enum Simple: Equatable, Sendable {
     /// A numeric value
     //case value(UInt64)
     /// The boolean value `false`.

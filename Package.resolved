@@ -1,12 +1,13 @@
 {
+  "originHash" : "52962b3f15c660ecfbdc819c2f6a78ed9f6bf3c4e247a476e8549aae3a85124c",
   "pins" : [
     {
       "identity" : "bcswiftfloat16",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/blockchaincommons/BCSwiftFloat16.git",
       "state" : {
-        "revision" : "71f380285d88a876f9cdf4e34e2e9e77d7ca4aef",
-        "version" : "1.0.0"
+        "revision" : "a27f3935a7b1db715713eda67369b02feade2ded",
+        "version" : "2.0.0"
       }
     },
     {
@@ -14,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftTags",
       "state" : {
-        "revision" : "a2f3e5c8e8ed1770fb3cb28b35aef252da7a0fc2",
-        "version" : "0.1.1"
+        "revision" : "b779f7be175583e63222b805e29712592beb3cfc",
+        "version" : "0.2.0"
       }
     },
     {
@@ -28,21 +29,12 @@
       }
     },
     {
-      "identity" : "swift-collections",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/wolfmcnally/swift-collections",
-      "state" : {
-        "revision" : "53a8adc54374f620002a3b6401d39e0feb3c57ae",
-        "version" : "1.1.0"
-      }
-    },
-    {
       "identity" : "swift-numberkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/wolfmcnally/swift-numberkit.git",
+      "location" : "https://github.com/objecthub/swift-numberkit.git",
       "state" : {
-        "revision" : "34a26297c200489779929b7fd7d4d30b63e87e69",
-        "version" : "2.4.3"
+        "revision" : "33af3f9011e45dcd8ee696492d30dbcd5a8a67f3",
+        "version" : "2.6.0"
       }
     },
     {
@@ -55,14 +47,23 @@
       }
     },
     {
+      "identity" : "swiftsortedcollections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/wolfmcnally/SwiftSortedCollections",
+      "state" : {
+        "revision" : "dd6c8e0eaef987e55a35c056d185144a7c71fc19",
+        "version" : "0.1.0"
+      }
+    },
+    {
       "identity" : "wolfbase",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/wolfmcnally/WolfBase.git",
       "state" : {
-        "revision" : "91c8cad45e6325ab76db1b5b60c5f6616d52a0cb",
-        "version" : "6.0.0"
+        "revision" : "b2515098bb6f46a8c0386b383b0ed9282828d1c4",
+        "version" : "7.0.0"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

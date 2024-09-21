@@ -2,7 +2,7 @@ import Foundation
 import NumberKit
 
 /// A symbolic representation of CBOR data.
-public indirect enum CBOR {
+public indirect enum CBOR: Sendable {
     /// Unsigned integer (major type 0).
     case unsigned(UInt64)
     /// Negative integer (major type 1).
@@ -29,7 +29,7 @@ public extension CBOR {
     /// The CBOR symbolic value for `true`.
     static let `true` = Bool.cborTrue
     /// The CBOR symbolic value for `null` (`nil`).
-    static var null = Simple.null.cbor
+    static let null = Simple.null.cbor
 
     /// Creates the symbolic CBOR representation of a value conforming to ``CBOREncodable``.
     init<T>(_ x: T) where T: CBOREncodable {

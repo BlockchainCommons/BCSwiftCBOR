@@ -1,36 +1,37 @@
-import XCTest
+import Testing
 import WolfBase
 import DCBOR
+import Foundation
 
-let knownTags = TagsStore([Tag(1, "date")])
+nonisolated(unsafe) let knownTags = TagsStore([Tag(1, "date")])
 
-final class FormatTests: XCTestCase {
+struct FormatTests {
     func literal(_ c: CBOR) -> CBOR { c }
     
     func run(_ cbor: [CBOR], description: String? = nil, debugDescription: String? = nil, diagnostic: String? = nil, diagnosticAnnotated: String? = nil, dump: String? = nil, dumpAnnotated: String? = nil) {
-        XCTAssert(cbor.dropFirst().allSatisfy { $0 == cbor.first })
+        #expect(cbor.dropFirst().allSatisfy { $0 == cbor.first })
         let c = cbor.first!
         if let description {
-            XCTAssertEqual(c.description, description)
+            #expect(c.description == description)
         }
         if let debugDescription {
-            XCTAssertEqual(c.debugDescription, debugDescription)
+            #expect(c.debugDescription == debugDescription)
         }
         if let diagnostic {
-            XCTAssertEqual(c.diagnostic(annotate: false), diagnostic)
+            #expect(c.diagnostic(annotate: false) == diagnostic)
         }
         if let diagnosticAnnotated {
-            XCTAssertEqual(c.diagnostic(annotate: true, tags: knownTags), diagnosticAnnotated)
+            #expect(c.diagnostic(annotate: true, tags: knownTags) == diagnosticAnnotated)
         }
         if let dump {
-            XCTAssertEqual(c.hex(annotate: false), dump)
+            #expect(c.hex(annotate: false) == dump)
         }
         if let dumpAnnotated {
-            XCTAssertEqual(c.hex(annotate: true, tags: knownTags), dumpAnnotated)
+            #expect(c.hex(annotate: true, tags: knownTags) == dumpAnnotated)
         }
     }
     
-    func testFormatSimple() {
+    @Test func formatSimple() {
         run([CBOR(false), CBOR.false, false.cbor],
             description: "false",
             debugDescription:"simple(false)",
@@ -52,16 +53,9 @@ final class FormatTests: XCTestCase {
             dump: "f6",
             dumpAnnotated: "f6 # null"
         )
-//        run([Simple(100).cbor],
-//            description: "simple(100)",
-//            debugDescription:"simple(100)",
-//            diagnostic: "simple(100)",
-//            dump: "f864",
-//            dumpAnnotated: "f864 # simple(100)"
-//        )
     }
     
-    func testFormatUnsigned() {
+    @Test func formatUnsigned() {
         run([CBOR(0), 0.cbor, literal(0)],
             description: "0",
             debugDescription: "unsigned(0)",
@@ -95,7 +89,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatNegative() {
+    @Test func formatNegative() {
         run([CBOR(-1), (-1).cbor, literal(-1)],
             description: "-1",
             debugDescription: "negative(-1)",
@@ -121,7 +115,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatString() {
+    @Test func formatString() {
         run([CBOR("Test"), "Test".cbor, literal("Test")],
             description: #""Test""#,
             debugDescription: #"text("Test")"#,
@@ -134,7 +128,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatSimpleArray() {
+    @Test func formatSimpleArray() {
         run([CBOR([1, 2, 3]), [1, 2, 3].cbor, literal([1, 2, 3])],
             description: "[1, 2, 3]",
             debugDescription: "array([unsigned(1), unsigned(2), unsigned(3)])",
@@ -149,7 +143,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatNestedArray() {
+    @Test func formatNestedArray() {
         let array: CBOR = [[1, 2, 3], ["A", "B", "C"]]
         run([array, literal([[1, 2, 3], ["A", "B", "C"]])],
             description: #"[[1, 2, 3], ["A", "B", "C"]]"#,
@@ -178,7 +172,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatMap() throws {
+    @Test func formatMap() throws {
         var map: Map = [1: "A"]
         map.insert(2, "B")
         run([map.cbor],
@@ -198,7 +192,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatTagged() {
+    @Test func formatTagged() {
         run([CBOR.tagged(100, "Hello")],
             description: #"100("Hello")"#,
             debugDescription: #"tagged(100, text("Hello"))"#,
@@ -212,7 +206,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatDate() {
+    @Test func formatDate() {
         run([CBOR(Date(timeIntervalSince1970: -100))],
             description: "1(-100)",
             debugDescription: "tagged(1, negative(-100))",
@@ -250,7 +244,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatFractionalDate() {
+    @Test func formatFractionalDate() {
         run([CBOR(Date(timeIntervalSince1970: 0.5))],
             description: "1(0.5)",
             debugDescription: "tagged(1, simple(0.5))",
@@ -264,7 +258,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatStructure() throws {
+    @Test func formatStructure() throws {
         let encodedCBOR = ‡"d83183015829536f6d65206d7973746572696573206172656e2774206d65616e7420746f20626520736f6c7665642e82d902c3820158402b9238e19eafbc154b49ec89edd4e0fb1368e97332c6913b4beb637d1875824f3e43bd7fb0c41fb574f08ce00247413d3ce2d9466e0ccfa4a89b92504982710ad902c3820158400f9c7af36804ffe5313c00115e5a31aa56814abaa77ff301da53d48613496e9c51a98b36d55f6fb5634fdb0123910cfa4904f1c60523df41013dc3749b377900"
         let diagnostic = """
         49(
@@ -316,7 +310,7 @@ final class FormatTests: XCTestCase {
         )
     }
     
-    func testFormatStructure2() throws {
+    @Test func formatStructure2() throws {
         let encodedCBOR = ‡"d9012ca4015059f2293a5bce7d4de59e71b4207ac5d202c11a6035970003754461726b20507572706c652041717561204c6f766504787b4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73656374657475722061646970697363696e6720656c69742c2073656420646f20656975736d6f642074656d706f7220696e6369646964756e74207574206c61626f726520657420646f6c6f7265206d61676e6120616c697175612e"
         let diagnosticAnnotated = """
         300(
@@ -373,7 +367,7 @@ final class FormatTests: XCTestCase {
     
     /// Ensure that key order conforms to:
     /// https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1-2.3.2.1
-    func testFormatKeyOrder() throws {
+    @Test func formatKeyOrder() throws {
         var map = Map()
         map[-1] = 3
         map[[-1]] = 7
