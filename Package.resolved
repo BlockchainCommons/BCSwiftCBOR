@@ -1,5 +1,5 @@
 {
-  "originHash" : "52962b3f15c660ecfbdc819c2f6a78ed9f6bf3c4e247a476e8549aae3a85124c",
+  "originHash" : "25173a1971b58c7ee3cf455cdb6d060f26309b34d2b2cca58671fbeb0f9c0273",
   "pins" : [
     {
       "identity" : "bcswiftfloat16",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/BlockchainCommons/BCSwiftTags",
       "state" : {
-        "revision" : "b779f7be175583e63222b805e29712592beb3cfc",
-        "version" : "0.2.0"
+        "revision" : "c7a1d820e7710ba2c874961c5dc7731017650661",
+        "version" : "0.2.1"
       }
     },
     {
