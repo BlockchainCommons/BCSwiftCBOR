@@ -3,7 +3,7 @@ import WolfBase
 import DCBOR
 import Foundation
 
-nonisolated(unsafe) let knownTags = TagsStore([Tag(1, "date")])
+let knownTags = TagsStore([Tag(1, "date")])
 
 struct FormatTests {
     func literal(_ c: CBOR) -> CBOR { c }
